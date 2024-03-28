@@ -1,0 +1,4 @@
+.DS_Store
+e-commerce/.env
+e-commerce/.svelte-kit
+e-commerce/node_modules
