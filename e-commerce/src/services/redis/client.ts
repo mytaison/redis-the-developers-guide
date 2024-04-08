@@ -1,5 +1,6 @@
 import type { RedisCommandArguments } from "@node-redis/client/dist/lib/commands";
 import { createClient, defineScript } from "redis";
+import { itemsKey, itemsViewsKey, itemsByViewsKey } from "$services/keys";
 
 const client = createClient({
   socket: {
@@ -27,13 +28,36 @@ const client = createClient({
         return reply;
       },
     }),
+    incrementView: defineScript({
+      NUMBER_OF_KEYS: 3,
+      SCRIPT: `
+			local itemsViewsKey = KEYS[1]
+			local itemsKey = KEYS[2]
+			local itemsByViewsKey = KEYS[3]
+
+			local itemId = ARGV[1]
+			local userId = ARGV[2]
+
+			local inserted = redis.call('PFADD', itemsViewsKey, userId)
+			if inserted then 
+				redis.call('HINCRBY', itemsKey, 'views', 1)
+				redis.call('ZINCRBY', itemsByViewsKey, 1, itemId)
+
+			end
+		`,
+      transformArguments(itemId: string, userId: string) {
+        return [
+          itemsViewsKey(itemId),
+          itemsKey(itemId),
+          itemsByViewsKey(),
+          itemId,
+          userId,
+        ];
+      },
+    }),
   },
 });
-client.on("connect", async () => {
-  await client.addOneAndStore("books:count", 10);
-  const result = await client.get("books:count");
-  console.log("books:count", result);
-});
+
 client.on("error", (err) => console.error(err));
 client.connect();
 

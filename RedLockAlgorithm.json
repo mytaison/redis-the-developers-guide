@@ -1,0 +1,14 @@
+{
+  "id": "68f064",
+  "fileName": "my-villainous-trip-notebook.json",
+  "name": "RedLock Algorithm",
+  "cells": [
+    {
+      "id": "8a8804",
+      "type": "markdown",
+      "content": "**Notes**\n\n* It is production-grade concurrency locking algorithm\n* "
+    },
+    { "id": "bab3a5", "type": "redis", "content": "" }
+  ],
+  "createdAt": "2024-04-04T13:35:48.908Z"
+}

@@ -1,4 +1,5 @@
 import { client } from "$services/redis";
+import { withLock } from "$services/redis";
 import { bidHistoryKey, itemsKey, itemsByPriceKey } from "$services/keys";
 import { DateTime } from "luxon";
 import { getItem } from "./items";
@@ -7,10 +8,10 @@ import type { CreateBidAttrs, Bid } from "$services/types";
 import { attr } from "svelte/internal";
 
 export const createBid = async (attrs: CreateBidAttrs) => {
-  return client.executeIsolated(async (isolatedClient) => {
-    await isolatedClient.watch(itemsKey(attrs.itemId));
-
+  return withLock(attrs.itemId, async (signal: any) => {
+    // Fetching the item
     const item = await getItem(attrs.itemId);
+    // Doing validation
     if (!item) {
       throw new Error("Item not found.");
     }
@@ -25,20 +26,28 @@ export const createBid = async (attrs: CreateBidAttrs) => {
       attrs.amount,
       attrs.createdAt.toMillis()
     );
-    isolatedClient
-      .multi()
-      .rPush(bidHistoryKey(attrs.itemId), serialized)
-      .hSet(itemsKey(attrs.itemId), {
+    // Writing some data
+    if (signal.expired) {
+      throw new Error("Lock Expired, cannot write anymore.");
+    }
+    return Promise.all([
+      client.rPush(bidHistoryKey(attrs.itemId), serialized),
+      client.hSet(itemsKey(attrs.itemId), {
         bids: item.bids + 1,
         price: attrs.amount,
         highestBidUserId: attrs.userId,
-      })
-      .zAdd(itemsByPriceKey(), {
+      }),
+      client.zAdd(itemsByPriceKey(), {
         value: attrs.itemId,
         score: attrs.amount,
-      })
-      .exec();
+      }),
+    ]);
   });
+
+  //   return client.executeIsolated(async (isolatedClient) => {
+  //     await isolatedClient.watch(itemsKey(attrs.itemId));
+  //     //   .exec();
+  //   });
 };
 
 export const getBidHistory = async (

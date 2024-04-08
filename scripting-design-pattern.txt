@@ -1,0 +1,6 @@
+*** Scripting Desgin Pattern ***
+
+1) Idenitfy all the keys and arguments you want to access
+2) Assign the keys and arguments in well defined variables at the top of the Scripting
+3) Write your logic
+4) Dont forget to return a value if you need to
