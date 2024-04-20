@@ -1,14 +1,1 @@
-{
-  "id": "68f064",
-  "fileName": "my-villainous-trip-notebook.json",
-  "name": "RedLock Algorithm",
-  "cells": [
-    {
-      "id": "8a8804",
-      "type": "markdown",
-      "content": "**Notes**\n\n* It is production-grade concurrency locking algorithm\n* "
-    },
-    { "id": "bab3a5", "type": "redis", "content": "" }
-  ],
-  "createdAt": "2024-04-04T13:35:48.908Z"
-}
+{"id":"68f064","fileName":"RedLockAlgorithm.json","name":"Algorithm","cells":[{"id":"8a8804","type":"markdown","content":"## RedLock Algorithm\n* It is production-grade concurrency locking algorithm\n\n## TF-IDF Algorithm: \n### Term Frequency x Inverse Document Frequency = Score for Each String\n* Term Frequency (TF) = # of times searched term appeared in string / # of total words in string\n*  Inverse Document Frequency (IDF) = log(1 + # of string in doc / # of strings containing the term in doc).\n* Example:  \n  1) Excellent fruit, good, fantastic, tasty fruit.  \n      TF = 2 (fruit appeared 2 times) / 6 (total words)\n  2) Good Fruit.\n      TF = 1 (fruit appeared 1 time) / 2 (total words) \n  * IDF = 2 (both 1 & 2 have fruit) / 2 (total 2 strings)\n  * So, TF-IDF for 1 is (2/6) * log(1 + 2/2) = .1 and \n  * TF-IDF for 2 is (1/2) * log(1 + 2/2) = .15\n### Setting up weight on Fields\n  * @field1('searchTerm') => {$weight: 5.0} @field2('searchTerm')\n "},{"id":"bab3a5","type":"redis","content":""}],"createdAt":"2024-04-04T13:35:48.908Z"}

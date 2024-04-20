@@ -1,7 +1,10 @@
 import { randomBytes } from "crypto";
 import { client } from "./client";
 
-export const withLock = async (key: string, cb: (signal: any) => any) => {
+export const withLock = async (
+  key: string,
+  cb: (redisClient: Client, signal: any) => any
+) => {
   // Initialize few variables to control retry behavior
   const retryDelaysMs = 100;
   let retries = 20;
@@ -9,6 +12,8 @@ export const withLock = async (key: string, cb: (signal: any) => any) => {
   const token = randomBytes(6).toString("hex");
   // Create a lock value
   const lockKey = `lock:${key}`;
+  // Locking timeout in MS
+  const timeoutMs = 2000;
   // Setup a while loop to implement retry behavior
   while (retries >= 0) {
     retries--;
@@ -25,8 +30,9 @@ export const withLock = async (key: string, cb: (signal: any) => any) => {
       const signal = { expired: false };
       setTimeout(() => {
         signal.expired = true;
-      }, 2000);
-      const result = await cb(signal);
+      }, timeoutMs);
+      const proxiedClient = buildClientProxy(timeoutMs);
+      const result = await cb(proxiedClient, signal);
       return result;
     } finally {
       // Unset the lock key
@@ -35,22 +41,22 @@ export const withLock = async (key: string, cb: (signal: any) => any) => {
   }
 };
 
-// type Client = typeof client;
+type Client = typeof client;
 const buildClientProxy = (timeoutMs: number) => {
-  //   const startTime = Date.now();
-  //   const handler = {
-  //     get(target: Client, prop: keyof Client) {
-  //       if (Date.now() >= startTime + timeoutMs) {
-  //         throw new Error("Lock is expired.");
-  //       }
-  //       const value = target[prop];
-  //       return typeof value === "function" ? value.bind(target) : value;
-  //     },
-  //   };
-  //   return new Proxy(client, handler) as Client;
+  const startTime = Date.now();
+  const handler = {
+    get(target: Client, prop: keyof Client) {
+      if (Date.now() >= startTime + timeoutMs) {
+        throw new Error("Lock is expired.");
+      }
+      const value = target[prop];
+      return typeof value === "function" ? value.bind(target) : value;
+    },
+  };
+  return new Proxy(client, handler) as Client;
 };
 
-const pause = (duration: number) => {
+export const pause = (duration: number) => {
   return new Promise((resolve) => {
     setTimeout(resolve, duration);
   });
